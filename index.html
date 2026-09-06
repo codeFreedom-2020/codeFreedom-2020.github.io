@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#171634">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>My stack</title>
+<style>
+:root{
+  --bg:#171634; --bg2:#221f4d; --ink:#F2F0FF; --dim:#9C97C7;
+  --b1:#6C63FF; --b2:#C6B9FF; --acc:#FFD166; --line:rgba(255,255,255,.14);
+  --pad:clamp(16px,5vw,26px);
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI Variable","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--sans);
+  font-weight:500; -webkit-font-smoothing:antialiased; transition:background .5s ease;
+  display:flex; flex-direction:column; height:100dvh;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,textarea{font:inherit;user-select:text;-webkit-user-select:text}
+
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px var(--pad) 0;flex:0 0 auto}
+.run{font-size:.82rem;color:var(--dim)}
+.run b{color:var(--acc);font-weight:700}
+.gear{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.07);display:grid;place-items:center;font-size:1.05rem;color:var(--dim)}
+
+.head{padding:2px var(--pad) 10px;flex:0 0 auto}
+.total{font-size:clamp(3.4rem,17vw,5.2rem);font-weight:800;letter-spacing:-.05em;line-height:.92;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:.05em}
+.total .cur{font-size:.42em;font-weight:500;color:var(--dim);letter-spacing:-.02em}
+.sub{margin-top:8px;font-size:.9rem;font-weight:400;color:var(--dim);line-height:1.45}
+.sub em{font-style:normal;color:var(--ink);font-weight:600}
+
+.stackWrap{flex:1 1 auto;position:relative;min-height:0;margin:4px var(--pad) 0;display:flex}
+.tube{position:relative;flex:1 1 auto;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border:1px solid var(--line);overflow:hidden}
+.bands{position:absolute;inset:0;display:flex;flex-direction:column-reverse}
+.band{width:100%;flex:0 0 auto;border-radius:3px;transform-origin:bottom}
+.band.new{animation:pop .42s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes pop{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
+.marks{position:absolute;inset:0;pointer-events:none}
+.mark{position:absolute;left:0;right:0;border-top:1px dashed var(--line)}
+.mark span{position:absolute;right:9px;top:-10px;font-size:.68rem;font-weight:600;color:var(--dim);background:var(--bg);padding:2px 7px;border-radius:9px;max-width:72%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:color .4s,background .4s}
+.mark.hit{border-top-color:var(--acc);border-top-style:solid;opacity:.6}
+.mark.hit span{color:var(--bg);background:var(--acc);font-weight:700}
+.empty{position:absolute;inset:0;display:grid;place-items:center;padding:0 32px;text-align:center;font-weight:400;font-size:.95rem;color:var(--dim);line-height:1.55}
+
+.act{flex:0 0 auto;padding:14px var(--pad) 18px}
+.log{width:100%;min-height:62px;border-radius:19px;background:var(--acc);color:#1a1533;font-size:1.16rem;font-weight:800;letter-spacing:-.02em;display:flex;align-items:center;justify-content:center;transition:transform .12s}
+.log:active{transform:scale(.965)}
+.row{display:flex;justify-content:space-between;align-items:center;margin-top:11px;gap:10px}
+.row button{font-size:.82rem;font-weight:400;color:var(--dim);padding:6px 2px}
+.row button:active{color:var(--ink)}
+
+.sheet{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;background:rgba(8,6,24,.62);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .26s}
+.sheet.on{opacity:1;pointer-events:auto}
+.card{width:100%;background:var(--bg2);border-radius:26px 26px 0 0;padding:22px var(--pad) calc(24px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.9,.3,1);max-height:88dvh;overflow:auto;-webkit-overflow-scrolling:touch}
+.sheet.on .card{transform:none}
+.card h2{margin:0 0 3px;font-size:1.3rem;font-weight:700;letter-spacing:-.03em}
+.card p{margin:0 0 4px;font-size:.85rem;font-weight:400;color:var(--dim);line-height:1.5}
+.lab{font-size:.8rem;font-weight:600;color:var(--dim);margin:22px 0 9px}
+.themes{display:flex;gap:11px}
+.sw{flex:1;aspect-ratio:1;border-radius:15px;border:2px solid transparent;display:grid;place-items:end center;padding-bottom:7px;font-size:.62rem;font-weight:600}
+.sw.on{border-color:var(--ink)}
+.chips{display:flex;gap:9px;flex-wrap:wrap}
+.chip{padding:11px 17px;border-radius:13px;background:rgba(255,255,255,.07);font-size:.95rem;font-weight:500}
+.chip.on{background:var(--acc);color:#1a1533;font-weight:700}
+.chip.go{background:var(--acc);color:#1a1533;font-weight:700}
+.done{width:100%;margin-top:26px;min-height:54px;border-radius:16px;background:rgba(255,255,255,.1);font-weight:700;font-size:1rem}
+.danger{width:100%;margin-top:10px;padding:13px;font-size:.8rem;font-weight:400;color:#FF8FA8}
+
+.ms{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.ms b{font-weight:700;font-size:.9rem;min-width:56px;font-variant-numeric:tabular-nums}
+.ms input{flex:1;background:rgba(255,255,255,.07);border:0;border-radius:11px;padding:11px 13px;color:var(--ink);font-size:.9rem;font-weight:500}
+.ms input::placeholder{color:var(--dim);font-weight:400}
+
+.hrow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.hdot{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+.hd{flex:1;font-size:.88rem;font-weight:500}
+.hd small{display:block;color:var(--dim);font-weight:400;font-size:.76rem;margin-top:2px}
+.hrow input{width:78px;background:rgba(255,255,255,.07);border:0;border-radius:10px;padding:9px 11px;color:var(--ink);font-size:.88rem;font-weight:600;text-align:right}
+.del{color:#FF8FA8;font-size:.8rem;padding:9px 2px 9px 8px;font-weight:500}
+
+.code{width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:13px;padding:13px;color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.72rem;line-height:1.5;word-break:break-all;min-height:96px;resize:none}
+
+.pop{position:fixed;left:0;right:0;top:30%;transform:translateY(-50%) scale(.9);z-index:30;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .4s cubic-bezier(.2,1.4,.4,1);padding:0 var(--pad)}
+.pop.on{opacity:1;transform:translateY(-50%) scale(1);pointer-events:auto}
+.pop b{display:block;font-size:2.4rem;font-weight:800;letter-spacing:-.045em;color:var(--acc)}
+.pop i{font-style:normal;display:block;font-size:.94rem;font-weight:400;color:var(--ink);margin-top:4px}
+.pop .save{margin-top:20px;background:var(--acc);color:#1a1533;font-weight:700;font-size:.92rem;padding:13px 22px;border-radius:15px}
+.pop .skip{display:block;margin:11px auto 0;font-size:.8rem;font-weight:400;color:var(--dim);padding:6px 12px}
+.dot{position:fixed;width:9px;height:9px;border-radius:50%;z-index:29;pointer-events:none}
+
+.toast{position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(14px);z-index:40;background:var(--bg2);border:1px solid var(--line);color:var(--ink);padding:13px 19px;border-radius:15px;font-size:.85rem;font-weight:500;max-width:82vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;box-shadow:0 10px 34px rgba(0,0,0,.4)}
+.toast.on{opacity:1;transform:translateX(-50%)}
+
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="run" id="run">&nbsp;</div>
+  <button class="gear" id="gear" aria-label="Settings">☰</button>
+</div>
+
+<div class="head">
+  <div class="total"><span class="cur">$</span><span id="big">0</span></div>
+  <div class="sub" id="sub">Nothing kept yet.</div>
+</div>
+
+<div class="stackWrap">
+  <button class="tube" id="tube" aria-label="Open history">
+    <div class="bands" id="bands"></div>
+    <div class="marks" id="marks"></div>
+    <div class="empty" id="empty">Your stack starts here.<br>Log your first session below.</div>
+  </button>
+</div>
+
+<div class="act">
+  <button class="log" id="log">Log a session</button>
+  <div class="row">
+    <button id="other">Different amount</button>
+    <button id="spendBtn">Spending money: $0</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="card">
+    <h2>Settings</h2>
+    <p>How it looks, what a session pays, and what your milestones are called.</p>
+
+    <div class="lab">Colour</div>
+    <div class="themes" id="themes"></div>
+
+    <div class="lab">A session usually pays</div>
+    <div class="chips" id="pays"></div>
+
+    <div class="lab">You keep</div>
+    <div class="chips" id="splits"></div>
+
+    <div class="lab">Name your milestones</div>
+    <div id="msList"></div>
+
+    <div class="lab">Backup</div>
+    <p>Save this to your Notes. Add it to the same note each time so you always know where it is. Pasting it into a new phone brings your stack across.</p>
+    <textarea class="code" id="code" readonly></textarea>
+    <div class="chips" style="margin-top:10px">
+      <button class="chip go" id="share">Save to Notes</button>
+      <button class="chip" id="copy">Copy</button>
+      <button class="chip" id="restore">Restore</button>
+    </div>
+
+    <button class="done" id="close">Done</button>
+    <button class="danger" id="reset">Clear everything and start again</button>
+  </div>
+</div>
+
+<div class="sheet" id="hSheet">
+  <div class="card">
+    <h2>Every session</h2>
+    <p>Tap an amount to change it, or remove one you logged by mistake.</p>
+    <div id="hist"></div>
+    <button class="done" id="hClose">Done</button>
+  </div>
+</div>
+
+<div class="sheet" id="aSheet">
+  <div class="card">
+    <h2>Different amount</h2>
+    <p>A double session, a short one, or a week you were paid something else.</p>
+    <div class="chips" id="oneOff" style="margin-top:16px"></div>
+    <button class="done" id="aClose">Cancel</button>
+  </div>
+</div>
+
+<div class="pop" id="pop">
+  <b id="popN"></b>
+  <i id="popT"></i>
+  <button class="save" id="popSave">Save your code to Notes</button>
+  <button class="skip" id="popSkip">Not now</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='stackData_v2';
+const store={
+  async get(){
+    try{ if(window.storage){const r=await window.storage.get(KEY); if(r&&r.value) return r.value;} }catch(e){}
+    try{ return localStorage.getItem(KEY); }catch(e){}
+    return null;
+  },
+  async set(v){
+    try{ if(window.storage){ await window.storage.set(KEY,v); return; } }catch(e){}
+    try{ localStorage.setItem(KEY,v); }catch(e){}
+  }
+};
+
+const THEMES={
+  blueberry:{n:'Blueberry',bg:'#171634',bg2:'#221f4d',ink:'#F2F0FF',dim:'#9C97C7',b1:'#6C63FF',b2:'#C6B9FF',acc:'#FFD166'},
+  seafoam  :{n:'Seafoam',  bg:'#06282B',bg2:'#0B3B3F',ink:'#EAFBF7',dim:'#7FB3AF',b1:'#17BEBB',b2:'#A8F0E4',acc:'#FFB84D'},
+  sunset   :{n:'Sunset',   bg:'#2B1030',bg2:'#3D1743',ink:'#FFF0F4',dim:'#C094B8',b1:'#FF5E7E',b2:'#FFC3A0',acc:'#7BD1D1'},
+  forest   :{n:'Forest',   bg:'#10231A',bg2:'#183426',ink:'#EDFBF1',dim:'#84B097',b1:'#35A66A',b2:'#BFF0C8',acc:'#F2E28C'}
+};
+
+let S={logs:[],theme:'blueberry',pay:30,keep:.8,names:{}};
+let justAdded=null;
+
+const $=id=>document.getElementById(id);
+const kept=()=>S.logs.reduce((t,l)=>t+l.a*l.k,0);
+const spent=()=>S.logs.reduce((t,l)=>t+l.a*(1-l.k),0);
+const money=n=>Math.round(n).toLocaleString('en-AU');
+const save=()=>store.set(JSON.stringify(S));
+const day=iso=>Math.floor(new Date(iso).getTime()/864e5);
+
+function milestones(){
+  const m=[100,250,500,960]; let last=960;
+  while(kept()>=last-1){ last+=500; m.push(last); }
+  return m;
+}
+const goal=()=>milestones().slice(-1)[0];
+const label=m=>S.names[m]?S.names[m]:'$'+money(m);
+
+function run(){
+  if(!S.logs.length) return 0;
+  const L=[...S.logs].sort((a,b)=>new Date(a.d)-new Date(b.d));
+  let n=1;
+  for(let i=L.length-1;i>0;i--){
+    if((new Date(L[i].d)-new Date(L[i-1].d))/864e5<=16) n++; else break;
+  }
+  return n;
+}
+const thisWeek=()=>S.logs.filter(l=>new Date(l.d).getTime()>Date.now()-6048e5).length;
+
+function mix(a,b,t){
+  const p=h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16));
+  const [r1,g1,c1]=p(a),[r2,g2,c2]=p(b);
+  const f=(x,y)=>Math.round(x+(y-x)*t).toString(16).padStart(2,'0');
+  return '#'+f(r1,r2)+f(g1,g2)+f(c1,c2);
+}
+function toast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),2800);
+}
+
+/* ── compact backup payload ── */
+function encode(){
+  const o={
+    l:S.logs.map(x=>[day(x.d),+x.a,Math.round(x.k*100)]),
+    t:S.theme, p:S.pay, k:Math.round(S.keep*100), n:S.names
+  };
+  return 'STACK2:'+btoa(unescape(encodeURIComponent(JSON.stringify(o))))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decode(text){
+  const m=String(text).match(/STACK2:([A-Za-z0-9\-_]+)/);
+  if(!m) throw 0;
+  let b=m[1].replace(/-/g,'+').replace(/_/g,'/');
+  while(b.length%4) b+='=';
+  const o=JSON.parse(decodeURIComponent(escape(atob(b))));
+  if(!Array.isArray(o.l)) throw 0;
+  return {
+    logs:o.l.map((x,i)=>({id:'r'+i,d:new Date(x[0]*864e5).toISOString(),a:x[1],k:x[2]/100})),
+    theme:THEMES[o.t]?o.t:'blueberry', pay:o.p||30, keep:(o.k||80)/100, names:o.n||{}
+  };
+}
+function note(){
+  const d=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
+  const n=S.logs.length;
+  return `My stack, backup\n${d}\n$${money(kept())} kept over ${n} session${n===1?'':'s'}\n\n${encode()}`;
+}
+async function shareNote(){
+  const text=note();
+  if(navigator.share){
+    try{ await navigator.share({text}); return; }catch(e){ if(e&&e.name==='AbortError') return; }
+  }
+  try{ await navigator.clipboard.writeText(text); toast('Copied. Paste it into your stack note.'); }
+  catch(e){ $('code').select(); document.execCommand('copy'); toast('Copied. Paste it into your stack note.'); }
+}
+
+/* ── render ── */
+function paint(){
+  const t=THEMES[S.theme], r=document.documentElement.style;
+  Object.entries({bg:t.bg,bg2:t.bg2,ink:t.ink,dim:t.dim,b1:t.b1,b2:t.b2,acc:t.acc})
+    .forEach(([k,v])=>r.setProperty('--'+k,v));
+  document.querySelector('meta[name=theme-color]').content=t.bg;
+
+  const K=kept(), G=goal(), n=S.logs.length;
+  $('big').textContent=money(K);
+  $('empty').style.display=n?'none':'grid';
+
+  if(!n){
+    $('sub').textContent='Nothing kept yet.';
+    $('run').innerHTML='&nbsp;';
+  }else{
+    const nxt=milestones().find(m=>m>K)||G;
+    const wks=Math.max(1,Math.ceil((nxt-K)/(S.pay*S.keep)));
+    const when=new Date(Date.now()+wks*6048e5).toLocaleDateString('en-AU',{day:'numeric',month:'long'});
+    $('sub').innerHTML=`<em></em> by ${when}, if you keep going.`;
+    $('sub').firstChild.textContent=label(nxt);
+    const rn=run();
+    $('run').innerHTML=`${n} session${n>1?'s':''}`+(rn>1?` &middot; <b>${rn} in a row</b>`:'');
+  }
+  $('spendBtn').textContent='Spending money: $'+money(spent());
+
+  const bw=$('bands'); bw.innerHTML='';
+  const L=[...S.logs].sort((a,b)=>new Date(a.d)-new Date(b.d));
+  L.forEach((l,i)=>{
+    const d=document.createElement('div');
+    d.className='band'+(l.id===justAdded?' new':'');
+    d.style.height=Math.max(.7,(l.a*l.k/G)*100)+'%';
+    d.style.background=mix(t.b1,t.b2,L.length>1?i/(L.length-1):0);
+    bw.appendChild(d);
+  });
+  justAdded=null;
+
+  const mk=$('marks'); mk.innerHTML='';
+  milestones().forEach(m=>{
+    if(m>G) return;
+    const el=document.createElement('div');
+    el.className='mark'+(K>=m?' hit':'');
+    el.style.bottom=(m/G*100)+'%';
+    el.innerHTML='<span></span>';
+    el.firstChild.textContent=label(m);
+    mk.appendChild(el);
+  });
+
+  $('code').value=note();
+}
+
+function celebrate(m){
+  const t=THEMES[S.theme];
+  $('popN').textContent=label(m);
+  $('popT').textContent='Milestone reached. Save your code so this is never lost.';
+  $('pop').classList.add('on');
+  if(!matchMedia('(prefers-reduced-motion:reduce)').matches){
+    for(let i=0;i<22;i++){
+      const d=document.createElement('div'); d.className='dot';
+      d.style.background=[t.acc,t.b1,t.b2][i%3];
+      d.style.left='50%'; d.style.top='30%';
+      document.body.appendChild(d);
+      const a=Math.random()*Math.PI*2, dist=90+Math.random()*180;
+      d.animate([{transform:'translate(0,0) scale(1)',opacity:1},
+        {transform:`translate(${Math.cos(a)*dist}px,${Math.sin(a)*dist+90}px) scale(0)`,opacity:0}],
+        {duration:900+Math.random()*520,easing:'cubic-bezier(.2,.7,.4,1)'}).onfinish=()=>d.remove();
+    }
+  }
+}
+$('popSkip').onclick=()=>$('pop').classList.remove('on');
+$('popSave').onclick=async()=>{ await shareNote(); $('pop').classList.remove('on'); };
+
+async function add(amount){
+  const before=kept(), already=thisWeek();
+  const l={id:Date.now()+'-'+Math.random().toString(36).slice(2,7),d:new Date().toISOString(),a:amount,k:S.keep};
+  S.logs.push(l); justAdded=l.id;
+  const hit=milestones().find(m=>m>before&&m<=kept());
+  paint(); await save();
+  if(navigator.vibrate) navigator.vibrate(hit?[18,60,18]:12);
+  if(hit) setTimeout(()=>celebrate(hit),260);
+  else if(already>=1) setTimeout(()=>toast('Second one this week. School first.'),420);
+}
+
+$('log').onclick=()=>add(S.pay);
+$('other').onclick=()=>{ buildOneOff(); $('aSheet').classList.add('on'); };
+$('aClose').onclick=()=>$('aSheet').classList.remove('on');
+$('tube').onclick=()=>{ if(!S.logs.length) return; buildHist(); $('hSheet').classList.add('on'); };
+$('hClose').onclick=()=>$('hSheet').classList.remove('on');
+$('spendBtn').onclick=()=>toast('$'+money(spent())+' is yours to spend, no questions.');
+$('gear').onclick=()=>{ buildSheet(); paint(); $('sheet').classList.add('on'); };
+$('close').onclick=()=>$('sheet').classList.remove('on');
+document.querySelectorAll('.sheet').forEach(s=>s.onclick=e=>{ if(e.target===s) s.classList.remove('on'); });
+
+$('reset').onclick=async()=>{
+  if(!confirm('Clear every session and start from zero?')) return;
+  S.logs=[]; paint(); await save(); $('sheet').classList.remove('on');
+};
+$('share').onclick=shareNote;
+$('copy').onclick=async()=>{
+  try{ await navigator.clipboard.writeText(note()); toast('Copied.'); }
+  catch(e){ $('code').select(); document.execCommand('copy'); toast('Copied.'); }
+};
+$('restore').onclick=async()=>{
+  const v=prompt('Paste your backup note here:');
+  if(!v) return;
+  try{
+    S=decode(v); buildSheet(); paint(); await save();
+    toast('Restored. '+S.logs.length+' sessions.');
+  }catch(e){ toast('That code did not work.'); }
+};
+
+function buildOneOff(){
+  const w=$('oneOff'); w.innerHTML='';
+  [10,15,20,25,30,35,40,45,60,75].forEach(v=>{
+    const b=document.createElement('button');
+    b.className='chip'; b.textContent='$'+v;
+    b.onclick=async()=>{ $('aSheet').classList.remove('on'); await add(v); };
+    w.appendChild(b);
+  });
+  const c=document.createElement('button');
+  c.className='chip'; c.textContent='Something else';
+  c.onclick=async()=>{
+    const v=parseFloat(prompt('How much were you paid?')||'');
+    if(!isFinite(v)||v<=0) return;
+    $('aSheet').classList.remove('on'); await add(v);
+  };
+  w.appendChild(c);
+}
+
+function buildHist(){
+  const t=THEMES[S.theme], h=$('hist'); h.innerHTML='';
+  [...S.logs].sort((a,b)=>new Date(b.d)-new Date(a.d)).forEach(l=>{
+    const i=S.logs.indexOf(l);
+    const row=document.createElement('div'); row.className='hrow';
+    const dot=document.createElement('div'); dot.className='hdot';
+    dot.style.background=mix(t.b1,t.b2,.5);
+    const d=document.createElement('div'); d.className='hd';
+    d.textContent=new Date(l.d).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
+    const s=document.createElement('small'); s.textContent='keeps $'+money(l.a*l.k);
+    d.appendChild(s);
+    const inp=document.createElement('input');
+    inp.type='number'; inp.inputMode='decimal'; inp.value=l.a;
+    inp.onchange=async()=>{
+      const v=parseFloat(inp.value);
+      if(isFinite(v)&&v>0){ S.logs[i].a=v; paint(); await save(); buildHist(); }
+    };
+    const del=document.createElement('button'); del.className='del'; del.textContent='Remove';
+    del.onclick=async()=>{
+      S.logs.splice(i,1); paint(); await save(); buildHist();
+      if(!S.logs.length) $('hSheet').classList.remove('on');
+    };
+    row.append(dot,d,inp,del); h.appendChild(row);
+  });
+}
+
+function buildSheet(){
+  const th=$('themes'); th.innerHTML='';
+  Object.entries(THEMES).forEach(([k,t])=>{
+    const b=document.createElement('button');
+    b.className='sw'+(S.theme===k?' on':'');
+    b.style.background=`linear-gradient(160deg,${t.b1},${t.b2})`;
+    b.style.color=t.bg; b.textContent=t.n;
+    b.onclick=async()=>{ S.theme=k; paint(); buildSheet(); await save(); };
+    th.appendChild(b);
+  });
+  const p=$('pays'); p.innerHTML='';
+  [20,25,30,35,40].forEach(v=>{
+    const b=document.createElement('button');
+    b.className='chip'+(S.pay===v?' on':''); b.textContent='$'+v;
+    b.onclick=async()=>{ S.pay=v; paint(); buildSheet(); await save(); };
+    p.appendChild(b);
+  });
+  const sp=$('splits'); sp.innerHTML='';
+  [.5,.6,.7,.8,.9].forEach(v=>{
+    const b=document.createElement('button');
+    b.className='chip'+(Math.abs(S.keep-v)<.01?' on':''); b.textContent=Math.round(v*100)+'%';
+    b.onclick=async()=>{ S.keep=v; paint(); buildSheet(); await save(); };
+    sp.appendChild(b);
+  });
+  const ml=$('msList'); ml.innerHTML='';
+  milestones().forEach(m=>{
+    const row=document.createElement('div'); row.className='ms';
+    const b=document.createElement('b'); b.textContent='$'+money(m);
+    const i=document.createElement('input');
+    i.placeholder='Give it a name'; i.value=S.names[m]||''; i.maxLength=22;
+    i.oninput=async()=>{
+      const v=i.value.trim();
+      if(v) S.names[m]=v; else delete S.names[m];
+      paint(); await save();
+    };
+    row.append(b,i); ml.appendChild(row);
+  });
+}
+
+(async()=>{
+  const raw=await store.get();
+  if(raw){ try{ Object.assign(S,JSON.parse(raw)); }catch(e){} }
+  paint();
+})();
+</script>
+</body>
+</html>
